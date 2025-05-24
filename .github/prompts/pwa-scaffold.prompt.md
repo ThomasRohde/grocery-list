@@ -54,8 +54,11 @@ export default defineConfig({
       registerType: 'prompt',
       filename: 'sw.js',
       strategies: 'generateSW',
+      scope: '/${input:repoName}/',  // 🔑 Critical for multiple PWAs on same domain
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        navigateFallback: '/${input:repoName}/index.html',
+        navigateFallbackDenylist: [/^\/api/, /^\/[^/]+$/, /^\/$/, /^\/(?!${input:repoName})/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com/,
@@ -69,6 +72,7 @@ export default defineConfig({
       manifest: {
         name: '${input:appIdea}',
         short_name: '${input:repoName}',
+        id: '/${input:repoName}/',  // 🔑 Critical: Unique app ID for multiple PWAs
         description: 'A Progressive Web App for ${input:appIdea}',
         theme_color: '#ffffff',
         background_color: '#ffffff',
@@ -450,6 +454,117 @@ git branch  # Check current branch
 
 ✅ **Solution**: Always validate YAML syntax and recreate if corrupted
 
+### Multiple PWAs on Same Domain (Critical for GitHub Pages)
+
+🚨 **CRITICAL ISSUE**: Multiple PWAs deployed to same GitHub Pages domain cause installation conflicts
+
+**Problem**: When deploying multiple PWAs to the same GitHub account's GitHub Pages:
+- `username.github.io/app1/` 
+- `username.github.io/app2/`
+- `username.github.io/grocery-list/`
+
+PWA install prompts may not appear because:
+1. **Service Worker Scope Conflicts**: Service workers can interfere with each other
+2. **Browser PWA Detection**: Browsers may not distinguish between different apps on same domain
+3. **Manifest Conflicts**: Install criteria become ambiguous across multiple apps
+
+✅ **Solution**: Implement proper PWA scoping and unique identification:
+
+**1. Explicit Service Worker Scoping in vite.config.ts:**
+```ts
+export default defineConfig({
+  base: process.env.NODE_ENV === 'production' ? '/${input:repoName}/' : '/',
+  plugins: [
+    VitePWA({
+      registerType: 'prompt',
+      scope: '/${input:repoName}/',  // 🔑 Critical: Explicit scope
+      workbox: {
+        navigateFallback: '/${input:repoName}/index.html',
+        navigateFallbackDenylist: [
+          /^\/api/, 
+          /^\/[^/]+$/, 
+          /^\/$/, 
+          /^\/(?!${input:repoName})/  // 🔑 Only handle this app's routes
+        ],
+      },
+      manifest: {
+        name: 'Your App Name',
+        id: '/${input:repoName}/',     // 🔑 Critical: Unique app ID
+        scope: '/${input:repoName}/',
+        start_url: '/${input:repoName}/',
+        // Rest of manifest...
+      }
+    })
+  ]
+})
+```
+
+**2. Manual Service Worker Registration with Explicit Scope:**
+```ts
+// utils/pwa.ts
+export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (!('serviceWorker' in navigator)) {
+    console.log('Service Worker not supported');
+    return null;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.register(
+      '/${input:repoName}/sw.js',
+      {
+        scope: '/${input:repoName}/'  // 🔑 Critical: Match manifest scope
+      }
+    );
+    
+    console.log('SW registered with scope:', registration.scope);
+    return registration;
+  } catch (error) {
+    console.log('SW registration failed:', error);
+    return null;
+  }
+}
+```
+
+**3. Environment-Aware Manifest Path Resolution:**
+```ts
+// utils/pwa.ts
+export async function debugPWAStatus(): Promise<PWADebugResult> {
+  // Check manifest with correct path
+  try {
+    const manifestPath = import.meta.env.PROD 
+      ? '/${input:repoName}/manifest.webmanifest' 
+      : '/manifest.webmanifest';
+    const manifestResponse = await fetch(manifestPath);
+    const manifest = await manifestResponse.json();
+    console.log('Manifest loaded from:', manifestPath, manifest);
+  } catch (error) {
+    console.error('Manifest check failed:', error);
+  }
+}
+```
+
+**4. Testing Multiple PWAs:**
+- ✅ Test each PWA in separate browser profiles/incognito windows
+- ✅ Clear browser data between tests to reset PWA state
+- ✅ Verify service worker scopes don't overlap: `chrome://serviceworker-internals/`
+- ✅ Check manifest uniqueness: each app should have unique `id` and `scope`
+- ✅ Use browser dev tools Application → Manifest to verify correct loading
+
+**5. Alternative Solutions:**
+- **Option A**: Use separate GitHub accounts for different PWA projects
+- **Option B**: Deploy to different domains (Netlify, Vercel, Firebase Hosting)
+- **Option C**: Use subdomain approach with custom domain
+
+**Debugging Commands:**
+```ts
+// In browser console, check current PWA state
+console.log('Service Worker registrations:', await navigator.serviceWorker.getRegistrations());
+console.log('Current scope conflicts:', registrations.map(r => r.scope));
+
+// Check manifest loading
+fetch('/your-app/manifest.webmanifest').then(r => r.json()).then(console.log);
+```
+
 ---
 
 ## Updated Common Pitfalls & Solutions
@@ -526,6 +641,16 @@ if (typeof window !== 'undefined') {
 - [ ] Build succeeds and generates proper `dist/` folder
 - [ ] Live site accessible at `https://username.github.io/repo-name/`
 
+**Multiple PWA Deployment Testing (Critical)**:
+- [ ] Service worker scope is correctly set to `/${input:repoName}/`
+- [ ] Manifest `id` field is unique: `"id": "/${input:repoName}/"`
+- [ ] No service worker scope conflicts with other apps on same domain
+- [ ] PWA install prompt appears in fresh browser session/incognito mode
+- [ ] Test in separate browser profile if multiple PWAs exist on same domain
+- [ ] Verify `chrome://serviceworker-internals/` shows correct scope
+- [ ] Check browser DevTools → Application → Manifest loads correctly
+- [ ] Clear browser data between PWA tests to avoid conflicts
+
 ---
 
 ## Essential Files Checklist (Updated)
@@ -594,3 +719,4 @@ if (typeof window !== 'undefined') {
 - **Branch names vary by repository - never assume 'main' vs 'master'**
 - **GitHub Pages source configuration is critical for modern workflows**
 - **YAML file corruption can break entire deployment pipeline**
+- **Multiple PWAs on same domain REQUIRE explicit scoping and unique IDs to avoid install conflicts**
