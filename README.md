@@ -1,0 +1,290 @@
+# 🛒 Grocery List PWA
+
+A modern Progressive Web App for creating and managing grocery lists with offline support, family sharing via QR codes, and automatic background synchronization.
+
+## ✨ Features
+
+### 📱 Progressive Web App
+- **Installable**: Add to home screen on mobile and desktop
+- **Offline-first**: Works without internet connection
+- **Background sync**: Automatically syncs data when connectivity returns
+- **Responsive design**: Optimized for all device sizes
+- **Service Worker**: Caches resources for offline use
+
+### 🛒 Grocery Management
+- Create multiple grocery lists
+- Add, edit, and delete items
+- Mark items as completed
+- Progress tracking for each list
+- Local storage with IndexedDB
+
+### 👥 Family Sharing
+- Share lists via QR codes
+- Real-time sharing across devices
+- No account required for basic sharing
+
+### 🔄 Background Sync
+- Queues changes made while offline
+- Automatically syncs when internet returns
+- Prevents data loss during network interruptions
+- Smart conflict resolution
+
+### 🔄 Offline Support
+- All data stored locally using IndexedDB
+- Works completely offline
+- Background sync automatically syncs when connectivity returns
+- Queue-based sync system prevents data loss
+
+## 🚀 Live Demo
+
+Visit the live application: [https://thomasrohde.github.io/grocery-list/](https://thomasrohde.github.io/grocery-list/)
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite 6
+- **PWA**: vite-plugin-pwa with Workbox
+- **Styling**: Tailwind CSS v4
+- **Storage**: IndexedDB via `idb` library
+- **QR Codes**: `qrcode` library
+- **Routing**: React Router v7
+- **Deployment**: GitHub Pages via GitHub Actions
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ and npm
+- Modern browser with PWA support
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/ThomasRohde/grocery-list.git
+   cd grocery-list
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Start development server**:
+   ```bash
+   npm run dev
+   ```
+
+4. **Build for production**:
+   ```bash
+   npm run build
+   ```
+
+5. **Preview production build**:
+   ```bash
+   npm run preview
+   ```
+
+### Development Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run deploy` - Deploy to GitHub Pages
+- `npm run audit` - Run Lighthouse audit
+
+## PWA Features
+
+### Installation
+The app can be installed on:
+- **Mobile devices**: Add to Home Screen
+- **Desktop**: Install via browser prompt
+- **Supported browsers**: Chrome, Edge, Firefox, Safari
+
+### Offline Functionality
+- All grocery lists stored locally
+- Add/edit/delete items offline
+- Data persists across browser sessions
+- Background sync when connectivity returns
+
+### Service Worker
+- Caches app shell and assets
+- Provides offline fallbacks
+- Automatic updates in background
+
+## Family Sharing
+
+### QR Code Sharing
+1. Open any grocery list
+2. Tap the "Share" button
+3. Show QR code to family members
+4. They scan to access the shared list
+
+### Planned Features
+- Real-time collaborative editing
+- Push notifications for list updates
+- User accounts and permissions
+
+## Storage
+
+### IndexedDB Structure
+```
+grocery-db/
+├── lists/          # Grocery lists
+├── items/          # Individual items
+└── sync-queue/     # Background sync queue
+```
+
+### Data Schema
+```typescript
+interface GroceryList {
+  id: string;
+  name: string;
+  items: GroceryItem[];
+  createdAt: Date;
+  updatedAt: Date;
+  shareCode?: string;
+}
+
+interface GroceryItem {
+  id: string;
+  name: string;
+  category: GroceryCategory;
+  isCompleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+## Deployment
+
+### GitHub Pages
+The app is automatically deployed to GitHub Pages via GitHub Actions:
+
+1. **Automatic deployment**: Push to `main` branch
+2. **Manual deployment**: `npm run deploy`
+3. **Live URL**: https://ThomasRohde.github.io/grocery-list
+
+### GitHub Actions Workflow
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+```
+
+## Browser Compatibility
+
+### Minimum Requirements
+- **Chrome**: 88+
+- **Firefox**: 85+
+- **Safari**: 14+
+- **Edge**: 88+
+
+### PWA Features Support
+- Service Workers: ✅ All modern browsers
+- IndexedDB: ✅ All modern browsers
+- Web App Manifest: ✅ All modern browsers
+- Background Sync: 🔄 Chrome, Edge (others planned)
+
+## Performance
+
+### Lighthouse Scores (Target)
+- **Performance**: 90+
+- **Accessibility**: 100
+- **Best Practices**: 100
+- **PWA**: 100
+- **SEO**: 90+
+
+### Bundle Analysis
+- **Main bundle**: ~275KB (includes QR code generation)
+- **Gzipped**: ~89KB
+- **Service Worker**: Auto-generated by Workbox
+
+## Contributing
+
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open Pull Request
+
+### Development Guidelines
+- Use TypeScript for type safety
+- Follow ESLint configuration
+- Write meaningful commit messages
+- Test PWA functionality locally
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## Roadmap
+
+### v1.0 (Current)
+- ✅ Basic grocery list management
+- ✅ PWA installation and offline support
+- ✅ QR code sharing
+- ✅ Local data persistence
+
+### v1.1 (Planned)
+- 🔄 Background sync implementation
+- 🔄 Push notifications
+- 🔄 Enhanced sharing features
+- 🔄 User preferences and settings
+
+### v2.0 (Future)
+- 🔄 User accounts and authentication
+- 🔄 Real-time collaboration
+- 🔄 Cloud storage sync
+- 🔄 Advanced categorization and search
+
+## Support
+
+For issues and questions:
+- **GitHub Issues**: [Create an issue](https://github.com/ThomasRohde/grocery-list/issues)
+- **Documentation**: See `docs/` folder
+- **PWA Troubleshooting**: See `PWA_TROUBLESHOOTING.md`
+
+## Acknowledgments
+
+- **Workbox**: For PWA service worker generation
+- **Tailwind CSS**: For utility-first styling
+- **React**: For component-based architecture
+- **Vite**: For fast development and building
+- **IndexedDB**: For client-side storage
+    ...tseslint.configs.stylisticTypeChecked,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default tseslint.config({
+  plugins: {
+    // Add the react-x and react-dom plugins
+    'react-x': reactX,
+    'react-dom': reactDom,
+  },
+  rules: {
+    // other rules...
+    // Enable its recommended typescript rules
+    ...reactX.configs['recommended-typescript'].rules,
+    ...reactDom.configs.recommended.rules,
+  },
+})
+```
