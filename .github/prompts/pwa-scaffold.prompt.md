@@ -321,7 +321,16 @@ sizes.forEach(size => {
 });
 ```
 
-### 8. GitHub Actions Deployment
+### 8. GitHub Actions Deployment (Critical Updates)
+
+⚠️ **IMPORTANT**: Always check the actual branch name in your repository before deployment!
+
+**Step 1: Check Repository Branch**
+```bash
+git branch  # Check current branch name (often 'master' or 'main')
+```
+
+**Step 2: GitHub Actions Workflow** - Use LATEST action versions to avoid compatibility issues:
 
 **.github/workflows/deploy.yml**:
 ```yaml
@@ -329,7 +338,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]  # ⚠️ CHANGE TO YOUR ACTUAL BRANCH NAME
   workflow_dispatch:
 
 permissions:
@@ -337,38 +346,109 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
         cache: 'npm'
-        
+
     - name: Install dependencies
       run: npm ci
-      
+
     - name: Build
       run: npm run build
-      
+
     - name: Setup Pages
-      uses: actions/configure-pages@v3
-      
+      uses: actions/configure-pages@v4  # ⚠️ Use v4, not v3
+
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v2
+      uses: actions/upload-pages-artifact@v3  # ⚠️ Use v3, not v2
       with:
         path: './dist'
-        
+
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v2
+      uses: actions/deploy-pages@v4  # ⚠️ Use v4, not v2
 ```
+
+**Step 3: GitHub Pages Repository Settings**
+1. Go to repository Settings → Pages
+2. Under "Source", select **"GitHub Actions"** (NOT "Deploy from a branch")
+3. This is crucial - the old branch-based deployment won't work with the modern workflow
+
+**Step 4: Required Files**
+- [ ] `public/.nojekyll` - Prevents Jekyll processing on GitHub Pages
+- [ ] Correct `base` path in `vite.config.ts` for your repository name
+
+---
+
+## Critical Deployment Lessons (Real Implementation Experience)
+
+### GitHub Actions Version Compatibility Issues
+
+🚨 **Problem**: Action version mismatches cause deployment failures
+- Error: "Missing download info for actions/upload-artifact@v3"
+- Error: Actions fail with incompatible dependency versions
+
+✅ **Solution**: Always use LATEST compatible versions together:
+```yaml
+# ✅ WORKING COMBINATION (2025)
+uses: actions/configure-pages@v4
+uses: actions/upload-pages-artifact@v3  
+uses: actions/deploy-pages@v4
+
+# ❌ BROKEN COMBINATION (outdated)
+uses: actions/configure-pages@v3
+uses: actions/upload-pages-artifact@v2
+uses: actions/deploy-pages@v2
+```
+
+### Branch Name Assumption Issues
+
+🚨 **Problem**: Workflow triggers on wrong branch
+- Many repositories use `master` instead of `main`
+- Deployment fails silently when pushing to wrong branch
+
+✅ **Solution**: Always verify actual branch name:
+```bash
+git branch  # Check current branch
+# Update workflow to match actual branch name
+```
+
+### GitHub Pages Source Configuration
+
+🚨 **Problem**: 404 errors even with successful builds
+- Repository settings still using legacy "Deploy from branch"
+- Pages source not configured for GitHub Actions
+
+✅ **Solution**: 
+1. Repository Settings → Pages
+2. Source: **"GitHub Actions"** (required for modern workflow)
+3. NOT "Deploy from a branch" (legacy method)
+
+### File Corruption During Editing
+
+🚨 **Problem**: YAML files can become corrupted during manual editing
+- Empty workflow files cause deployment failures
+- Syntax errors break the entire workflow
+
+✅ **Solution**: Always validate YAML syntax and recreate if corrupted
 
 ---
 
@@ -437,6 +517,15 @@ if (typeof window !== 'undefined') {
 - [ ] All TypeScript errors resolved
 - [ ] No console errors in development
 
+**Deployment Testing Checklist**:
+- [ ] Verify repository branch name (`git branch`)
+- [ ] GitHub Actions workflow uses correct branch name
+- [ ] GitHub Actions uses latest compatible action versions
+- [ ] Repository Pages settings configured for "GitHub Actions" source
+- [ ] `.nojekyll` file exists in `public/` directory
+- [ ] Build succeeds and generates proper `dist/` folder
+- [ ] Live site accessible at `https://username.github.io/repo-name/`
+
 ---
 
 ## Essential Files Checklist (Updated)
@@ -478,6 +567,9 @@ if (typeof window !== 'undefined') {
 8. **Testing**: Validate PWA criteria and offline functionality
 9. **Build**: Ensure production build works with proper base paths
 10. **Deploy**: Use GitHub Actions for automatic deployment
+    - **Critical**: Verify branch name matches workflow trigger
+    - **Critical**: Use latest GitHub Actions versions (v4/v3 not v2/v3)
+    - **Critical**: Configure Pages source to "GitHub Actions" in repo settings
 
 **Success Criteria**:
 - ✅ `npm run dev` starts without errors
@@ -486,7 +578,8 @@ if (typeof window !== 'undefined') {
 - ✅ Offline functionality works completely
 - ✅ Background sync queues and processes operations
 - ✅ All TypeScript errors resolved
-- ✅ Production deployment successful
+- ✅ GitHub Actions deployment succeeds
+- ✅ Production deployment accessible at live URL
 
 ---
 
@@ -496,4 +589,8 @@ if (typeof window !== 'undefined') {
 - Comprehensive TypeScript types save debugging time later
 - Background sync requires careful IndexedDB queue management
 - Modern CSS frameworks require updated syntax patterns
-- Production PWA testing is essential before deployment
+- **Production PWA testing is essential before deployment**
+- **GitHub Actions versions must be compatible - always use latest**
+- **Branch names vary by repository - never assume 'main' vs 'master'**
+- **GitHub Pages source configuration is critical for modern workflows**
+- **YAML file corruption can break entire deployment pipeline**

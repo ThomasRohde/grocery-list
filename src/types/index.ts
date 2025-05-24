@@ -65,3 +65,35 @@ export interface SyncOperation {
   data: GroceryList | GroceryItem | { listId: string } | null;
   timestamp: number;
 }
+
+// PWA Install Prompt Event Interface
+export interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+  }>;
+  prompt(): Promise<void>;
+}
+
+// PWA Debug result interface
+export interface PWADebugResult {
+  isHTTPS: boolean;
+  hasSW: boolean;
+  isStandalone: boolean;
+  isInstallable: boolean;
+  userAgent: string;
+}
+
+// Window interface extension for debugging
+declare global {
+  interface Window {
+    checkPWAInstallCriteria?: () => PWADebugResult;
+    debugPWAStatus?: () => Promise<PWADebugResult>;
+  }
+  
+  interface ServiceWorkerRegistration {
+    sync?: {
+      register(tag: string): Promise<void>;
+    };
+  }
+}
