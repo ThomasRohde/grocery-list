@@ -53,8 +53,9 @@
 ## 🚧 In Progress
 - [x] ✅ Background sync functionality testing
 - [x] ✅ Production build verification
-- [x] PWA install criteria validation
-- [x] Lighthouse audit execution
+- [x] ✅ PWA install criteria validation
+- [x] ✅ GitHub Actions workflow branch fix (master vs main)
+- [ ] Lighthouse audit execution
 
 ## 📋 Remaining Tasks
 
